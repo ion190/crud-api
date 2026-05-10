@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// NOTE: SQLite has no native array/json type.
+// Array and object fields are stored as JSON strings and
+// serialized/deserialized in the route layer.
+
+model Habit {
+  id         String    @id
+  name       String
+  color      String
+  icon       String
+  frequency  String    // 'daily' | 'weekly' | 'custom'
+  targetDays String    // JSON: number[]
+  tags       String    // JSON: string[]
+  quota      String?   // JSON: HabitQuota | null
+  createdAt  String
+  archivedAt String?
+  logs       HabitLog[]
+}
+
+model HabitLog {
+  id          String  @id
+  habitId     String
+  completedAt String
+  note        String?
+  value       Float?
+  habit       Habit   @relation(fields: [habitId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id               String  @id
+  title            String
+  description      String?
+  dueDate          String?
+  notificationTime String?
+  completedAt      String?
+  createdAt        String
+  tags             String  // JSON: string[]
+  urgency          String  // 'low' | 'medium' | 'high'
+  importance       String  // 'low' | 'medium' | 'high'
+  archivedAt       String?
+  recurrence       String? // JSON: TaskRecurrence | null
+}
+
+model Exercise {
+  id          String  @id
+  name        String
+  category    String
+  description String?
+  imageUrl    String?
+  createdAt   String
+}
+
+model WorkoutPlan {
+  id                String             @id
+  name              String
+  description       String?
+  exercises         String             // JSON: PlanExercise[]
+  createdAt         String
+  completedWorkouts CompletedWorkout[]
+}
+
+model CompletedWorkout {
+  id                   String      @id
+  workoutPlanId        String
+  workoutPlanName      String
+  startedAt            String
+  completedAt          String
+  totalDurationSeconds Int
+  exercises            String      // JSON: CompletedExercise[]
+  workoutPlan          WorkoutPlan @relation(fields: [workoutPlanId], references: [id])
+}
+
+model WorkSessionCategory {
+  id       String                 @id
+  name     String
+  color    String
+  icon     String
+  createdAt String
+  sessions CompletedWorkSession[]
+}
+
+model CompletedWorkSession {
+  id                     String              @id
+  categoryId             String
+  categoryName           String
+  categoryColor          String
+  plannedDurationSeconds Int
+  actualDurationSeconds  Int
+  distractionSeconds     Int
+  productivityPct        Float
+  notes                  String?
+  tags                   String?             // JSON: string[]
+  tasks                  String              // JSON: WorkSessionTaskSnapshot[]
+  startedAt              String
+  endedAt                String
+  category               WorkSessionCategory @relation(fields: [categoryId], references: [id])
+}
+
+model JournalEntry {
+  id        String  @id
+  period    String  // 'daily'|'weekly'|'monthly'|'quarterly'|'yearly'|'decadely'
+  dateKey   String
+  title     String?
+  content   String
+  mood      Int?
+  createdAt String
+  updatedAt String
+
+  @@unique([period, dateKey])
+}
+
+model CalendarActivity {
+  id        String  @id
+  title     String
+  date      String
+  startTime String
+  endTime   String
+  color     String
+  category  String?
+  notes     String?
+  createdAt String
+}
